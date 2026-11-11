@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto"; //Para valores aleatorios
 import { contarPrimos } from "./calculo";
 import { Worker } from "node:worker_threads";
 import path from "node:path";
+import { medirLatencia, resumenMetricas } from "./metricas"; // <-- 1. Importado aquí
 
 const PORT= Number (process.env.PORT??3000);
 const INVENTARIO_URL= process.env.INVENTARIO_URL ?? "http://localhost:3001";
@@ -20,9 +21,15 @@ interface Pedido {
 const pedidos: Pedido []=[];
 const app= express();
 app.use(express.json());
+app.use(medirLatencia); // <-- 2. Interceptor registrado justo después de express.json()
 
 app.get("/health",(_req: Request, res: Response)=>{
     res.json({status:"ok", servicio: "pedidos"});
+});
+
+// <-- 3. Nueva ruta GET /metricas añadida aquí
+app.get("/metricas", (_req: Request, res: Response) => {
+    res.json(resumenMetricas());
 });
 
 app.get("/health/ready", async (_req: Request, res: Response)=>{
